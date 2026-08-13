@@ -401,6 +401,26 @@ textarea:focus {
     opacity: 0;
 }
 
+.nav-user-initial {
+    display: none;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.user-btn.has-initial .icon,
+.user-btn.with-image .nav-user-initial {
+    display: none;
+}
+
+.user-btn.has-initial .nav-user-initial {
+    display: block;
+}
+
+.user-btn.with-image.has-initial .nav-user-initial {
+    display: none;
+}
+
 .user-profile-card {
     position: absolute;
     right: 0;

@@ -458,11 +458,16 @@ function initializeUserProfile() {
     const profileName = document.getElementById('profile-name');
     const profileRole = document.getElementById('profile-role');
     const userAvatar = document.getElementById('user-avatar');
+    const navUserInitial = document.getElementById('nav-user-initial');
     const isLoggedIn = Boolean(localStorage.getItem('userRole') || getCookie('userRole'));
 
     if (profileName) profileName.textContent = userName;
     if (profileRole) profileRole.textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
     if (userAvatar) userAvatar.textContent = userName.charAt(0).toUpperCase();
+    if (navUserInitial && isLoggedIn) {
+        navUserInitial.textContent = Array.from(userName.trim())[0]?.toUpperCase() || 'U';
+        userBtn?.classList.add('has-initial');
+    }
 
     if (isLoggedIn) {
         showProfileCard();
