@@ -16,10 +16,10 @@ if ($action === 'me') {
     $user = $stmt->get_result()->fetch_assoc();
     if (!$user) user_response(['success' => false, 'message' => 'User not found.'], 404);
 
-    $stmt = $conn->prepare("SELECT id, name, cover_image, status, submitted_at FROM places WHERE submitted_by = ? AND status = 'pending' ORDER BY submitted_at DESC");
+    $stmt = $conn->prepare('SELECT id, name, cover_image, status, submitted_at, approved_at, rejected_at FROM places WHERE submitted_by = ? ORDER BY submitted_at DESC');
     $stmt->bind_param('i', $userId); $stmt->execute();
-    $pending = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    user_response(['success' => true, 'user' => $user, 'pending' => $pending]);
+    $submissions = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    user_response(['success' => true, 'user' => $user, 'submissions' => $submissions]);
 }
 
 if ($action === 'update_avatar') {

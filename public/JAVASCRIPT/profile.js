@@ -245,17 +245,27 @@ function getBoardConfig() {
             }))
         },
         pending: {
-            title: 'Pending Approval',
-            subtitle: 'Destinations you submitted that are waiting for an admin decision.',
-            empty: 'You have no destinations waiting for approval.',
-            status: 'Pending submissions loaded.',
-            items: (state.travel.pending || []).map(place => ({
-                key: `pending-${place.id}`,
-                icon: 'fa-hourglass-half',
+            title: 'Approval Status',
+            subtitle: 'Track every destination you submitted: approved, pending, or rejected.',
+            empty: 'You have not submitted any destinations for approval yet.',
+            status: 'Submission approval statuses loaded.',
+            items: (state.travel.places || []).map(place => {
+                const status = ['approved', 'rejected', 'pending'].includes(place.status) ? place.status : 'pending';
+                const details = {
+                    approved: { label: 'Approved', icon: 'fa-circle-check' },
+                    rejected: { label: 'Rejected', icon: 'fa-circle-xmark' },
+                    pending: { label: 'Pending', icon: 'fa-hourglass-half' }
+                }[status];
+
+                return {
+                    key: `approval-${place.id}`,
+                    icon: details.icon,
                 title: place.name || `Destination ${place.id}`,
-                meta: `Submitted ${formatDate(place.submitted_at)}`,
-                actionLabel: 'Awaiting approval'
-            }))
+                    meta: `Submitted ${formatDate(place.submitted_at)}`,
+                    actionLabel: details.label,
+                    status
+                };
+            })
         },
         places: {
             title: 'Your Places',
@@ -312,7 +322,7 @@ function renderBoardCard(item) {
         ? `<a class="profile-card-action" href="${item.href}">Open</a>`
         : item.action
             ? `<button class="profile-card-action" type="button" data-action="${item.action}" data-place-id="${item.placeId || ''}" data-note-id="${item.noteId || ''}">${item.actionLabel || 'Open'}</button>`
-            : `<span class="profile-card-action profile-card-static">${item.actionLabel || 'Pending'}</span>`;
+            : `<span class="profile-card-action profile-card-static${item.status ? ` profile-card-status profile-card-status-${item.status}` : ''}">${item.actionLabel || 'Pending'}</span>`;
 
     return `
         <article class="profile-board-card">
@@ -493,7 +503,7 @@ async function loadUserInfo() {
     const data = await fetchJson('../../PHP/user.php?action=me');
     if (!data?.success) return;
     state.user = data.user || { avatar: '' };
-    state.travel.pending = data.pending || [];
+    state.travel.places = data.submissions || [];
     renderIdentity();
     renderBoard();
 }

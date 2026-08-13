@@ -2798,6 +2798,28 @@ textarea:focus {
     background: #eef7ef;
 }
 
+.profile-card-status {
+    cursor: default;
+}
+
+.profile-card-status-approved {
+    border-color: #9fd8b5;
+    background: #eaf8ef;
+    color: #17633c;
+}
+
+.profile-card-status-pending {
+    border-color: #f2d494;
+    background: #fff7df;
+    color: #8a5a05;
+}
+
+.profile-card-status-rejected {
+    border-color: #efb3b3;
+    background: #fff0f0;
+    color: #a32929;
+}
+
 .profile-empty-state {
     padding: 2rem;
     border: 1px dashed rgba(33, 79, 66, 0.24);
