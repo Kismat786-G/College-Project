@@ -4,7 +4,7 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $host = 'localhost';
 $user = 'root';
 $password = '';
-$database = 'nepal_travel';
+$database = 'college_project';
 
 $conn = mysqli_connect($host, $user, $password);
 

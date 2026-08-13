@@ -80,7 +80,7 @@ composer.lock           Locked dependency versions
    http://localhost/Group-05/public/HTML/index.html
    ```
 
-The app connects to the local `nepal_travel` database. Its PHP database bootstrap creates the database and required tables when the application is first used.
+The app connects to the local `college_project` database. Its PHP database bootstrap creates the database and required tables when the application is first used.
 
 ## Email OTP flow
 
