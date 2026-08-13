@@ -163,7 +163,10 @@ function renderIdentity() {
             els.avatar.style.backgroundImage = '';
             els.avatar.classList.remove('with-image');
         }
-        els.avatar.childNodes[0].nodeValue = state.user.avatar ? '' : userName.charAt(0).toUpperCase();
+        const initial = document.getElementById('profile-avatar-initial');
+        if (initial) {
+            initial.textContent = Array.from(userName.trim())[0]?.toUpperCase() || 'T';
+        }
     }
 }
 

@@ -2511,6 +2511,18 @@ textarea:focus {
     background-repeat: no-repeat;
 }
 
+.profile-avatar-initial {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    line-height: 1;
+}
+
+.profile-page-avatar.with-image .profile-avatar-initial {
+    visibility: hidden;
+}
+
 .avatar-upload-btn {
     position: absolute;
     right: -2px;
