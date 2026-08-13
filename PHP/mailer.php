@@ -3,10 +3,22 @@
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
+function setMailerFailureMessage($message) {
+    $GLOBALS['mailerFailureMessage'] = $message;
+}
+
+function getMailerFailureMessage() {
+    return $GLOBALS['mailerFailureMessage']
+        ?? 'We could not send the verification email. Please try again later.';
+}
+
 function sendVerificationEmail($recipientEmail, $otp) {
+    setMailerFailureMessage('We could not send the verification email. Please try again later.');
+
     $autoload = __DIR__ . '/../vendor/autoload.php';
     if (!is_file($autoload)) {
         error_log('SMTP mailer is unavailable: run composer install.');
+        setMailerFailureMessage('Email support is not installed. Please contact the administrator.');
         return false;
     }
 
@@ -16,6 +28,7 @@ function sendVerificationEmail($recipientEmail, $otp) {
     foreach (['host', 'username', 'password', 'from_email'] as $requiredSetting) {
         if (empty($config[$requiredSetting])) {
             error_log('SMTP mailer is not configured: missing ' . $requiredSetting . '.');
+            setMailerFailureMessage('Email delivery is not configured. Please contact the administrator.');
             return false;
         }
     }
@@ -42,6 +55,7 @@ function sendVerificationEmail($recipientEmail, $otp) {
         return true;
     } catch (Exception $exception) {
         error_log('Unable to send verification email: ' . $exception->getMessage());
+        setMailerFailureMessage('The email server could not send the verification email. Please try again later.');
         return false;
     }
 }

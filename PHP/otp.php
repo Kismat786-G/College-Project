@@ -71,7 +71,7 @@ function sendOTP($email, $conn) {
         $deleteFailedOtp = $conn->prepare('DELETE FROM otp_verifications WHERE email = ?');
         $deleteFailedOtp->bind_param('s', $email);
         $deleteFailedOtp->execute();
-        return ['success' => false, 'message' => 'We could not send the verification email. Please try again later.'];
+        return ['success' => false, 'message' => getMailerFailureMessage()];
     }
 
     $_SESSION['otp_email'] = $email;

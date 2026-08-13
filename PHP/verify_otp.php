@@ -46,7 +46,7 @@ if ($action === 'resend') {
         $delOtpStmt = $conn->prepare('DELETE FROM otp_verifications WHERE email = ?');
         $delOtpStmt->bind_param('s', $email);
         $delOtpStmt->execute();
-        respond(['success' => false, 'message' => 'We could not send the verification email. Please try again later.'], 500);
+        respond(['success' => false, 'message' => getMailerFailureMessage()], 500);
     }
 
     $_SESSION['otp_email'] = $email;
