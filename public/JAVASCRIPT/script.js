@@ -155,6 +155,10 @@ function refreshCategories() {
     categories.splice(0, categories.length, 'All', ...dynamicCategories);
 }
 
+function categoryKey(category) {
+    return String(category || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+}
+
 function getUniquePlaceValues(fields) {
     return Array.from(new Set(
         places
@@ -363,6 +367,12 @@ function attachEventListeners() {
             filterPlaces();
         });
     }
+
+    categoriesContainer?.addEventListener('click', event => {
+        const button = event.target.closest('[data-category]');
+        if (!button || !categoriesContainer.contains(button)) return;
+        setCategory(button.dataset.category || 'All');
+    });
 
     if (ratingFilter) {
         ratingFilter.addEventListener('change', (e) => {
@@ -720,8 +730,8 @@ function toggleMobileMenu() {
 // Categories
 function renderCategories() {
     categoriesContainer.innerHTML = categories.map(cat => `
-        <button class="category-btn ${cat === currentFilter ? 'active' : ''}"
-                onclick="setCategory(${JSON.stringify(cat)})">
+        <button type="button" class="category-btn ${categoryKey(cat) === categoryKey(currentFilter) ? 'active' : ''}"
+                data-category="${escapeHtml(cat)}">
             ${escapeHtml(cat)}
         </button>
     `).join('');
@@ -731,6 +741,7 @@ function setCategory(category) {
     currentFilter = category;
     renderCategories();
     filterPlaces();
+    document.querySelector('.places-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function setDestinationView(view) {
@@ -870,7 +881,7 @@ function renderSpotlight() {
 function getFilteredPlaces() {
     return places
         .filter(place => {
-            const matchesCategory = currentFilter === 'All' || place.category === currentFilter;
+            const matchesCategory = categoryKey(currentFilter) === 'all' || categoryKey(place.category) === categoryKey(currentFilter);
             const searchableLocation = place.location || [place.district, place.province].filter(Boolean).join(', ');
             const searchableRegion = [place.district, place.province, place.municipality]
                 .filter(Boolean)
