@@ -739,6 +739,20 @@ function renderCategories() {
 
 function setCategory(category) {
     currentFilter = category;
+    // A category selection should show every approved place in that category,
+    // rather than being hidden by an older search or advanced filter.
+    searchQuery = '';
+    minRatingFilter = 0;
+    budgetFilter = 'all';
+    difficultyFilter = 'All';
+    regionFilter = 'All';
+    currentView = 'explore';
+    if (searchInput) searchInput.value = '';
+    if (ratingFilter) ratingFilter.value = '0';
+    if (budgetFilterSelect) budgetFilterSelect.value = 'all';
+    if (difficultyFilterSelect) difficultyFilterSelect.value = 'All';
+    if (regionFilterSelect) regionFilterSelect.value = 'All';
+    navViewButtons.forEach(button => button.classList.toggle('active', button.dataset.view === 'explore'));
     renderCategories();
     filterPlaces();
     document.querySelector('.places-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
