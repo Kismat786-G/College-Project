@@ -314,8 +314,11 @@ if ($action === 'submit') {
 
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
         $uploadDir = dirname(__DIR__) . '/public/uploads/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+            respond(['success' => false, 'message' => 'Image storage folder could not be created. Please contact the administrator.'], 500);
+        }
+        if (!is_writable($uploadDir)) {
+            respond(['success' => false, 'message' => 'Image storage is not writable. Please contact the administrator.'], 500);
         }
         $fileName = uniqid('place_', true) . '.' . strtolower($ext);
         $destPath = $uploadDir . $fileName;
