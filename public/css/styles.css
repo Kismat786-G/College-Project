@@ -2136,6 +2136,15 @@ textarea:focus {
     transform: translateY(-1px);
 }
 
+.selected-map-location {
+    padding: 0.75rem 0.9rem;
+    border: 1px dashed rgba(33, 79, 66, 0.28);
+    border-radius: 10px;
+    background: rgba(33, 79, 66, 0.04);
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+}
+
 .map-picker-modal {
     position: fixed;
     inset: 0;
@@ -2231,6 +2240,55 @@ textarea:focus {
     color: #fff;
 }
 
+.map-picker-search .map-current-location {
+    background: #eef7ef;
+    color: var(--color-primary);
+    border: 1px solid rgba(33, 79, 66, 0.18);
+}
+
+.map-search-results {
+    display: grid;
+    gap: 0.45rem;
+    max-height: 190px;
+    overflow-y: auto;
+    padding: 0.4rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: #fbfaf6;
+}
+
+.map-search-result {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.65rem;
+    align-items: center;
+    padding: 0.7rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
+.map-search-result:hover,
+.map-search-result:focus-visible {
+    border-color: rgba(33, 79, 66, 0.34);
+    background: #eef7ef;
+    outline: none;
+}
+
+.map-search-result i {
+    color: var(--color-primary);
+}
+
+.map-search-result span {
+    overflow-wrap: anywhere;
+    font-size: 0.9rem;
+}
+
 .map-picker-canvas {
     width: 100%;
     height: 420px;
@@ -2242,12 +2300,25 @@ textarea:focus {
 
 .map-picker-meta {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: flex-start;
     gap: 12px;
     flex-wrap: wrap;
     font-size: 0.95rem;
     color: var(--text-muted);
+}
+
+.map-picker-meta strong {
+    color: var(--text-primary);
+}
+
+.map-route-summary {
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    background: #eaf8ef;
+    color: #17633c;
+    font-weight: 700;
 }
 
 .map-picker-actions {
@@ -3287,6 +3358,19 @@ label .req {
     .modal-content {
         margin: 1rem;
     }
+
+    .map-picker-modal {
+        padding: 10px;
+    }
+
+    .map-picker-sheet {
+        max-height: calc(100vh - 20px);
+        overflow-y: auto;
+    }
+
+    .map-picker-canvas {
+        height: 330px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -3302,5 +3386,15 @@ label .req {
 
     .footer-grid {
         grid-template-columns: 1fr;
+    }
+
+    .map-picker-search input,
+    .map-picker-search button,
+    .map-picker-actions button {
+        width: 100%;
+    }
+
+    .map-picker-actions {
+        justify-content: stretch;
     }
 }

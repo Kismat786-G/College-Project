@@ -6,7 +6,7 @@
     <title>Nepal Travel - Discover Hidden Natural Retreats</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="../css/styles.css?v=20260813-user-initial">
+    <link rel="stylesheet" href="../css/styles.css?v=20260814-map-experience">
 
 </head>
 <body>
@@ -702,12 +702,12 @@
                         </div>
                         <div class="map-pick">
                             <label>Exact map location</label>
-                            <p class="helper">Drop a pin so travellers can open directions directly to this place.</p>
+                            <p class="helper">Search for the place, choose a result, or drop a pin. You can also check the distance and driving time from your current location.</p>
                             <input type="hidden" name="mapLatitude" id="mapLatitude">
                             <input type="hidden" name="mapLongitude" id="mapLongitude">
                             <input type="hidden" name="mapUrl" id="mapUrl">
                             <button type="button" class="map-pick-btn" id="openMapPickerBtn"><i class="fa-solid fa-map-location-dot"></i> Choose location on map</button>
-                            <span class="helper" id="selectedMapLocation">No map location selected yet.</span>
+                            <div class="selected-map-location" id="selectedMapLocation">No map location selected yet.</div>
                         </div>
                         <div class="grid" style="margin-top:18px">
                             <div class="field col-12">
@@ -784,14 +784,18 @@
                 <div class="map-picker-search">
                     <input type="text" id="mapSearchInput" placeholder="Search a place, district, or landmark">
                     <button type="button" id="mapSearchBtn">Search</button>
+                    <button type="button" class="map-current-location" id="mapMyLocationBtn"><i class="fa-solid fa-location-crosshairs"></i> Use my location</button>
                 </div>
+                <div class="map-search-results" id="mapSearchResults" aria-live="polite" hidden></div>
                 <div class="map-picker-canvas" id="mapPickerCanvas"></div>
                 <div class="map-picker-meta">
-                    <span id="mapSelectionLabel">Click the map to place a pin.</span>
+                    <strong id="mapSelectionLabel">Click the map or choose a search result to place a pin.</strong>
                     <span id="mapSelectionCoords">No location selected yet.</span>
+                    <span class="map-route-summary" id="mapRouteSummary" hidden></span>
                 </div>
                 <div class="map-picker-actions">
                     <button type="button" class="btn btn-outline" id="mapPickerCancelBtn">Cancel</button>
+                    <button type="button" class="btn btn-outline" id="clearMapLocationBtn">Clear pin</button>
                     <button type="button" class="use-location" id="useMapLocationBtn">Use this location</button>
                 </div>
             </div>
@@ -805,7 +809,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="../JAVASCRIPT/script.js?v=20260813-user-initial"></script>
+    <script src="../JAVASCRIPT/script.js?v=20260814-map-experience"></script>
 </body>
 
 </html>

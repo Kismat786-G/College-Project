@@ -1250,6 +1250,40 @@ function validateStep(n) {
 let locationMap;
 let locationMarker;
 let pendingLocation;
+let userLocationMarker;
+let locationRouteLine;
+let currentUserLocation;
+let routeRequestId = 0;
+
+function formatMapDistance(meters) {
+    return meters >= 1000 ? `${(meters / 1000).toFixed(meters >= 10000 ? 0 : 1)} km` : `${Math.round(meters)} m`;
+}
+
+function formatMapDuration(seconds) {
+    const minutes = Math.max(1, Math.round(seconds / 60));
+    return minutes >= 60 ? `${Math.floor(minutes / 60)} hr ${minutes % 60 ? `${minutes % 60} min` : ''}` : `${minutes} min`;
+}
+
+function straightLineDistance(lat1, lng1, lat2, lng2) {
+    const radians = value => value * Math.PI / 180;
+    const earthRadius = 6371000;
+    const latDelta = radians(lat2 - lat1);
+    const lngDelta = radians(lng2 - lng1);
+    const a = Math.sin(latDelta / 2) ** 2 + Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(lngDelta / 2) ** 2;
+    return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function setRouteSummary(message = '', isVisible = false) {
+    const summary = document.getElementById('mapRouteSummary');
+    if (!summary) return;
+    summary.textContent = message;
+    summary.hidden = !isVisible;
+}
+
+function clearRouteLine() {
+    if (locationRouteLine && locationMap) locationMap.removeLayer(locationRouteLine);
+    locationRouteLine = null;
+}
 
 function setMapLocation(lat, lng, label = 'Selected location') {
     const latitude = Number(lat);
@@ -1260,12 +1294,14 @@ function setMapLocation(lat, lng, label = 'Selected location') {
     if (locationMap && window.L) {
         if (locationMarker) locationMarker.setLatLng([latitude, longitude]);
         else locationMarker = L.marker([latitude, longitude]).addTo(locationMap);
+        locationMarker.bindPopup(`<strong>Destination</strong><br>${escapeHtml(label)}`);
         locationMap.setView([latitude, longitude], Math.max(locationMap.getZoom(), 13));
     }
     const coords = document.getElementById('mapSelectionCoords');
     const selected = document.getElementById('mapSelectionLabel');
     if (coords) coords.textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
     if (selected) selected.textContent = label;
+    updateRoutePreview();
 }
 
 function initialiseLocationMap() {
@@ -1280,6 +1316,118 @@ function initialiseLocationMap() {
     locationMap.on('click', event => setMapLocation(event.latlng.lat, event.latlng.lng, 'Pinned location'));
 }
 
+function clearMapLocation() {
+    pendingLocation = null;
+    if (locationMarker && locationMap) locationMap.removeLayer(locationMarker);
+    locationMarker = null;
+    clearRouteLine();
+    routeRequestId++;
+    const label = document.getElementById('mapSelectionLabel');
+    const coords = document.getElementById('mapSelectionCoords');
+    if (label) label.textContent = 'Click the map or choose a search result to place a pin.';
+    if (coords) coords.textContent = 'No location selected yet.';
+    setRouteSummary('', false);
+    const savedLabel = document.getElementById('selectedMapLocation');
+    if (savedLabel) savedLabel.textContent = 'No map location selected yet.';
+    ['mapLatitude', 'mapLongitude', 'mapUrl'].forEach(id => {
+        const field = document.getElementById(id);
+        if (field) field.value = '';
+    });
+}
+
+async function updateRoutePreview() {
+    if (!pendingLocation || !currentUserLocation) return;
+    const requestId = ++routeRequestId;
+    setRouteSummary('Calculating driving distance and travel time…', true);
+    clearRouteLine();
+
+    try {
+        const params = new URLSearchParams({
+            action: 'route',
+            origin_lat: currentUserLocation.lat,
+            origin_lng: currentUserLocation.lng,
+            destination_lat: pendingLocation.lat,
+            destination_lng: pendingLocation.lng
+        });
+        const response = await fetch(`../../PHP/map.php?${params}`);
+        const data = await response.json();
+        if (requestId !== routeRequestId) return;
+        if (!response.ok || !data.success) throw new Error(data.message || 'Route unavailable');
+
+        setRouteSummary(`From your current location: ${formatMapDistance(data.distance_meters)} by road · about ${formatMapDuration(data.duration_seconds)} by car`, true);
+        if (locationMap && window.L && data.geometry?.coordinates?.length) {
+            locationRouteLine = L.geoJSON(data.geometry, { style: { color: '#1d7357', weight: 5, opacity: 0.8 } }).addTo(locationMap);
+            const bounds = locationRouteLine.getBounds();
+            if (bounds.isValid()) locationMap.fitBounds(bounds, { padding: [35, 35] });
+        }
+    } catch (error) {
+        if (requestId !== routeRequestId) return;
+        const directDistance = straightLineDistance(currentUserLocation.lat, currentUserLocation.lng, pendingLocation.lat, pendingLocation.lng);
+        setRouteSummary(`Straight-line distance from your location: ${formatMapDistance(directDistance)}. Driving time is currently unavailable.`, true);
+    }
+}
+
+function renderMapSearchResults(results) {
+    const container = document.getElementById('mapSearchResults');
+    if (!container) return;
+    container.replaceChildren();
+    container.hidden = false;
+
+    if (!results.length) {
+        const message = document.createElement('p');
+        message.className = 'helper';
+        message.textContent = 'No locations found. Try a landmark, municipality, or district name.';
+        container.appendChild(message);
+        return;
+    }
+
+    results.forEach(result => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'map-search-result';
+        const icon = document.createElement('i');
+        icon.className = 'fa-solid fa-location-dot';
+        icon.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.textContent = result.label;
+        button.append(icon, label);
+        button.addEventListener('click', () => {
+            setMapLocation(result.lat, result.lng, result.label);
+            container.hidden = true;
+            container.replaceChildren();
+        });
+        container.appendChild(button);
+    });
+}
+
+function useCurrentMapLocation(button) {
+    if (!navigator.geolocation) {
+        showToast('Your browser does not support location access.', 'fa-triangle-exclamation');
+        return;
+    }
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Finding you…';
+    navigator.geolocation.getCurrentPosition(position => {
+        const { latitude: lat, longitude: lng } = position.coords;
+        currentUserLocation = { lat, lng };
+        if (locationMap && window.L) {
+            if (userLocationMarker) userLocationMarker.setLatLng([lat, lng]);
+            else userLocationMarker = L.circleMarker([lat, lng], { radius: 8, color: '#9a7142', fillColor: '#9a7142', fillOpacity: 1, weight: 2 }).addTo(locationMap);
+            userLocationMarker.bindPopup('Your current location');
+            if (!pendingLocation) locationMap.setView([lat, lng], 14);
+        }
+        button.disabled = false;
+        button.innerHTML = originalText;
+        if (pendingLocation) updateRoutePreview();
+        else setRouteSummary('Your current location is ready. Choose a destination to see distance and driving time.', true);
+    }, () => {
+        button.disabled = false;
+        button.innerHTML = originalText;
+        showToast('We could not access your location. Allow location permission and try again.', 'fa-triangle-exclamation');
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 });
+}
+
 function setupMapPicker() {
     const modal = document.getElementById('mapPickerModal');
     const openButton = document.getElementById('openMapPickerBtn');
@@ -1287,6 +1435,8 @@ function setupMapPicker() {
     const useButton = document.getElementById('useMapLocationBtn');
     const searchInput = document.getElementById('mapSearchInput');
     const searchButton = document.getElementById('mapSearchBtn');
+    const myLocationButton = document.getElementById('mapMyLocationBtn');
+    const clearButton = document.getElementById('clearMapLocationBtn');
 
     if (!modal || !openButton) return;
     const close = () => {
@@ -1312,12 +1462,12 @@ function setupMapPicker() {
         searchButton.disabled = true;
         searchButton.textContent = 'Searching…';
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query + ', Nepal')}`);
-            const results = await response.json();
-            if (!results.length) throw new Error('not found');
-            setMapLocation(results[0].lat, results[0].lon, results[0].display_name);
+            const response = await fetch(`../../PHP/map.php?action=search&q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.message || 'not found');
+            renderMapSearchResults(data.results || []);
         } catch (error) {
-            showToast('Location not found. Try a more specific place name.', 'fa-triangle-exclamation');
+            showToast(error.message || 'Location search failed. Please try again.', 'fa-triangle-exclamation');
         } finally {
             searchButton.disabled = false;
             searchButton.textContent = 'Search';
@@ -1335,10 +1485,12 @@ function setupMapPicker() {
         document.getElementById('mapLatitude').value = pendingLocation.lat.toFixed(7);
         document.getElementById('mapLongitude').value = pendingLocation.lng.toFixed(7);
         document.getElementById('mapUrl').value = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${pendingLocation.lat},${pendingLocation.lng}`)}`;
-        document.getElementById('selectedMapLocation').textContent = `Location selected: ${pendingLocation.lat.toFixed(6)}, ${pendingLocation.lng.toFixed(6)}`;
+        document.getElementById('selectedMapLocation').textContent = `Location selected: ${pendingLocation.label} (${pendingLocation.lat.toFixed(6)}, ${pendingLocation.lng.toFixed(6)})`;
         close();
     });
     searchButton?.addEventListener('click', search);
+    myLocationButton?.addEventListener('click', () => useCurrentMapLocation(myLocationButton));
+    clearButton?.addEventListener('click', clearMapLocation);
     searchInput?.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); search(); } });
 }
 
